@@ -6,20 +6,25 @@ import {
   useEffect,
   useRef,
   useState,
+  useSyncExternalStore,
   type CSSProperties,
   type PointerEvent as ReactPointerEvent
 } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
+  blueprint,
   experience,
-  featuredProjects,
   projects,
   reputation,
   skills,
   websites,
+  workflow,
+  type BlueprintNodeId,
+  type Tool,
   type Website
 } from "@/lib/content";
+import { toolIcons } from "@/lib/tool-icons";
 
 gsap.registerPlugin(ScrollTrigger);
 
@@ -388,6 +393,331 @@ function ProjectCard({
   );
 }
 
+const REDUCED_MOTION = "(prefers-reduced-motion: reduce)";
+
+function subscribeReducedMotion(callback: () => void) {
+  const media = window.matchMedia(REDUCED_MOTION);
+
+  media.addEventListener("change", callback);
+
+  return () => media.removeEventListener("change", callback);
+}
+
+function ToolGlyph({ tool, className }: { tool: Tool; className: string }) {
+  const icon = toolIcons[tool];
+
+  return (
+    <svg
+      className={className}
+      viewBox={icon.viewBox}
+      aria-hidden="true"
+      {...(icon.stroke
+        ? {
+            fill: "none",
+            stroke: "currentColor",
+            strokeWidth: 1.75,
+            strokeLinecap: "round",
+            strokeLinejoin: "round"
+          }
+        : {
+            fill: "currentColor",
+            fillRule: icon.evenOdd ? "evenodd" : undefined
+          })}
+    >
+      {icon.paths.map((path) => (
+        <path key={path} d={path} />
+      ))}
+    </svg>
+  );
+}
+
+type Point = [x: number, y: number];
+
+type BlueprintLayout = {
+  width: number;
+  height: number;
+  user: Point;
+  nodes: Record<BlueprintNodeId, Point>;
+  /** Wires into "deploy" are drawn dashed: the part runs on it. */
+  edges: {
+    from: BlueprintNodeId | "user";
+    to: BlueprintNodeId;
+    path: string;
+    /** Share of each loop when the request signal runs along this wire. */
+    signal?: [start: number, end: number];
+  }[];
+};
+
+const SIGNAL_LOOP = 5200;
+
+// The same system drawn twice: wide beside the detail panel, tall on phones.
+const BLUEPRINT_LAYOUTS: Record<"wide" | "tall", BlueprintLayout> = {
+  wide: {
+    width: 920,
+    height: 500,
+    user: [70, 110],
+    nodes: {
+      interface: [260, 110],
+      api: [500, 110],
+      ai: [790, 110],
+      data: [500, 270],
+      services: [790, 270],
+      deploy: [500, 410]
+    },
+    edges: [
+      {
+        from: "user",
+        to: "interface",
+        path: "M70 110 H260",
+        signal: [0.02, 0.16]
+      },
+      {
+        from: "interface",
+        to: "api",
+        path: "M260 110 H500",
+        signal: [0.16, 0.32]
+      },
+      { from: "api", to: "ai", path: "M500 110 H790", signal: [0.32, 0.54] },
+      { from: "api", to: "data", path: "M500 110 V270", signal: [0.32, 0.46] },
+      {
+        from: "api",
+        to: "services",
+        path: "M500 110 V190 H790 V270",
+        signal: [0.32, 0.58]
+      },
+      { from: "interface", to: "deploy", path: "M260 110 V410" },
+      { from: "data", to: "deploy", path: "M500 270 V410" },
+      { from: "services", to: "deploy", path: "M790 270 V410" },
+      { from: "deploy", to: "deploy", path: "M150 410 H850" }
+    ]
+  },
+  tall: {
+    width: 400,
+    height: 720,
+    user: [200, 40],
+    nodes: {
+      interface: [200, 150],
+      api: [200, 270],
+      ai: [95, 400],
+      services: [305, 400],
+      data: [200, 530],
+      deploy: [200, 650]
+    },
+    edges: [
+      {
+        from: "user",
+        to: "interface",
+        path: "M200 40 V150",
+        signal: [0.02, 0.16]
+      },
+      {
+        from: "interface",
+        to: "api",
+        path: "M200 150 V270",
+        signal: [0.16, 0.32]
+      },
+      {
+        from: "api",
+        to: "ai",
+        path: "M200 270 V335 H95 V400",
+        signal: [0.32, 0.54]
+      },
+      {
+        from: "api",
+        to: "services",
+        path: "M200 270 V335 H305 V400",
+        signal: [0.32, 0.54]
+      },
+      { from: "api", to: "data", path: "M200 270 V530", signal: [0.32, 0.52] },
+      { from: "data", to: "deploy", path: "M200 530 V650" },
+      { from: "deploy", to: "deploy", path: "M90 650 H310" }
+    ]
+  }
+};
+
+function BlueprintWires({
+  variant,
+  active,
+  motion
+}: {
+  variant: keyof typeof BLUEPRINT_LAYOUTS;
+  active: BlueprintNodeId;
+  motion: boolean;
+}) {
+  const layout = BLUEPRINT_LAYOUTS[variant];
+  const isLit = (edge: BlueprintLayout["edges"][number]) =>
+    edge.from === active || edge.to === active;
+
+  // Lit wires draw last so a shared segment shows the accent.
+  const edges = [...layout.edges].sort(
+    (a, b) => Number(isLit(a)) - Number(isLit(b))
+  );
+
+  return (
+    <svg
+      className={`blueprint-wires blueprint-wires--${variant}`}
+      viewBox={`0 0 ${layout.width} ${layout.height}`}
+      aria-hidden="true"
+    >
+      {edges.map((edge) => (
+        <path
+          key={edge.path}
+          d={edge.path}
+          vectorEffect="non-scaling-stroke"
+          className={[
+            edge.to === "deploy" && "is-hosted",
+            isLit(edge) && "is-lit"
+          ]
+            .filter(Boolean)
+            .join(" ")}
+        />
+      ))}
+
+      {motion &&
+        layout.edges.map(
+          ({ path, signal }) =>
+            signal && (
+              <circle key={path} className="blueprint-signal" r={4}>
+                <animateMotion
+                  path={path}
+                  dur={`${SIGNAL_LOOP}ms`}
+                  repeatCount="indefinite"
+                  calcMode="linear"
+                  keyPoints="0;0;1;1"
+                  keyTimes={`0;${signal[0]};${signal[1]};1`}
+                />
+                <animate
+                  attributeName="opacity"
+                  dur={`${SIGNAL_LOOP}ms`}
+                  repeatCount="indefinite"
+                  calcMode="discrete"
+                  values="0;1;0"
+                  keyTimes={`0;${signal[0]};${signal[1]}`}
+                />
+              </circle>
+            )
+        )}
+    </svg>
+  );
+}
+
+function SystemBlueprint() {
+  const [active, setActive] = useState<BlueprintNodeId>("api");
+  const motion = useSyncExternalStore(
+    subscribeReducedMotion,
+    () => !window.matchMedia(REDUCED_MOTION).matches,
+    () => false
+  );
+  const { wide, tall } = BLUEPRINT_LAYOUTS;
+  const current = blueprint.find((node) => node.id === active)!;
+
+  // One set of nodes serves both drawings; CSS picks the coordinates.
+  const place = (wideAt: Point, tallAt: Point) =>
+    ({
+      "--x": `${(wideAt[0] / wide.width) * 100}%`,
+      "--y": `${(wideAt[1] / wide.height) * 100}%`,
+      "--tx": `${(tallAt[0] / tall.width) * 100}%`,
+      "--ty": `${(tallAt[1] / tall.height) * 100}%`
+    }) as CSSProperties;
+
+  return (
+    <div className="blueprint">
+      <div className="monitor-topbar">
+        <span>SYSTEM BLUEPRINT</span>
+        <span>SELECT A PART</span>
+      </div>
+
+      <div className="blueprint-body">
+        <div className="blueprint-stage">
+          <div
+            className="blueprint-map"
+            role="group"
+            aria-label="Parts of a system"
+            style={
+              {
+                "--wide-ratio": `${wide.width} / ${wide.height}`,
+                "--tall-ratio": `${tall.width} / ${tall.height}`
+              } as CSSProperties
+            }
+          >
+            <BlueprintWires variant="wide" active={active} motion={motion} />
+            <BlueprintWires variant="tall" active={active} motion={motion} />
+
+            <span
+              className="blueprint-user"
+              style={place(wide.user, tall.user)}
+            >
+              <span>Request</span>
+            </span>
+
+            {blueprint.map((node) => (
+              <button
+                key={node.id}
+                type="button"
+                className={`blueprint-node ${node.id === active ? "is-active" : ""}`}
+                style={place(wide.nodes[node.id], tall.nodes[node.id])}
+                aria-pressed={node.id === active}
+                onClick={() => setActive(node.id)}
+                onFocus={() => setActive(node.id)}
+                onPointerEnter={(event) => {
+                  if (event.pointerType === "mouse") setActive(node.id);
+                }}
+              >
+                <span>{node.number}</span>
+                {node.name}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="blueprint-detail" aria-live="polite">
+          {/* Every panel stays mounted in one grid cell so the monitor keeps
+              the tallest panel's height instead of jumping between parts. */}
+          {blueprint.map((node) => (
+            <div
+              key={node.id}
+              className={`blueprint-panel ${node.id === active ? "is-active" : ""}`}
+              aria-hidden={node.id !== active}
+            >
+              <span className="eyebrow">
+                {node.number} / {node.name}
+              </span>
+              <strong>{node.title}</strong>
+              <p>{node.description}</p>
+
+              <ul className="blueprint-tools">
+                {node.tools.map((tool) => (
+                  <li key={tool}>
+                    <ToolGlyph tool={tool} className="blueprint-tool-icon" />
+                    {tool}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="monitor-bottom">
+        <div className="blueprint-legend" aria-hidden="true">
+          <span>
+            <i />
+            Request
+          </span>
+          <span>
+            <i className="is-hosted" />
+            Runs on
+          </span>
+        </div>
+
+        <span>
+          {current.number} / {String(blueprint.length).padStart(2, "0")}
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function SiteMock({ website }: { website: Website }) {
   const { layout, name, sector } = website;
 
@@ -743,6 +1073,79 @@ export default function Site() {
         }
       });
 
+      const steps = gsap.utils.toArray<HTMLElement>(".workflow li");
+      let signalLoop: gsap.core.Timeline | undefined;
+
+      const reveal = gsap.timeline({
+        scrollTrigger: {
+          trigger: ".workflow",
+          start: "top 80%",
+          once: true
+        },
+        onComplete: () => {
+          // A signal runs along each step in turn once everything is in.
+          signalLoop = gsap.timeline({ repeat: -1, repeatDelay: 1.4 });
+
+          steps.forEach((step) => {
+            signalLoop!
+              .to(step.querySelector(".workflow-dot"), {
+                scale: 1.9,
+                duration: 0.25,
+                yoyo: true,
+                repeat: 1,
+                ease: "power1.inOut"
+              })
+              .fromTo(
+                step.querySelector(".workflow-signal"),
+                { scaleX: 0, opacity: 1 },
+                { scaleX: 1, duration: 0.9, ease: "power1.inOut" },
+                "<"
+              );
+          });
+
+          signalLoop.to(".workflow-signal", { opacity: 0, duration: 0.6 });
+        }
+      });
+
+      reveal.from(".workflow-heading", {
+        opacity: 0,
+        y: 20,
+        duration: 0.6,
+        ease: "power3.out"
+      });
+
+      // Each dot pops as the previous line finishes drawing.
+      steps.forEach((step, index) => {
+        reveal
+          .from(
+            step.querySelector(".workflow-dot"),
+            { scale: 0, duration: 0.35, ease: "back.out(3)" },
+            0.35 + index * 0.7
+          )
+          .from(
+            step.querySelector(".workflow-line"),
+            { scaleX: 0, duration: 0.7, ease: "power2.inOut" },
+            "<"
+          )
+          .from(
+            step.querySelectorAll(".workflow-meta, h3, p, .workflow-output"),
+            {
+              opacity: 0,
+              y: 18,
+              duration: 0.6,
+              stagger: 0.07,
+              ease: "power3.out"
+            },
+            "<0.15"
+          );
+      });
+
+      ScrollTrigger.create({
+        trigger: ".workflow",
+        onToggle: (self) =>
+          self.isActive ? signalLoop?.resume() : signalLoop?.pause()
+      });
+
       gsap.to(".hero-copy", {
         yPercent: -12,
         scrollTrigger: {
@@ -765,8 +1168,6 @@ export default function Site() {
       setActiveSkill(category);
     }
   };
-
-  const featureVideoUrl = process.env.NEXT_PUBLIC_FEATURE_VIDEO_URL;
 
   return (
     <>
@@ -826,59 +1227,40 @@ export default function Site() {
             <em>A SYSTEM IN MOTION.</em>
           </h2>
 
-          <p className="statement-description" data-reveal>
-            I build the layer between complex systems and useful products,
-            connecting interfaces, APIs, data, automation, and production
-            infrastructure into experiences people can actually use.
-          </p>
+          <div className="workflow-heading">
+            <span>HOW I WORK</span>
+            <span>IDEA → PRODUCTION</span>
+          </div>
+
+          <ol className="workflow">
+            {workflow.map((step) => (
+              <li key={step.number}>
+                <span className="workflow-line" aria-hidden="true">
+                  <b className="workflow-signal" />
+                </span>
+                <span className="workflow-dot" aria-hidden="true" />
+                <div className="workflow-meta">
+                  <span>{step.number}</span>
+                  <span>{step.phase}</span>
+                </div>
+                <h3>{step.title}</h3>
+                <p>{step.description}</p>
+                <span className="workflow-output">→ {step.output}</span>
+              </li>
+            ))}
+          </ol>
         </section>
 
         <section className="feature-section">
-          <SectionLabel index="02">Featured system</SectionLabel>
+          <SectionLabel index="02">Anatomy of a system</SectionLabel>
 
           <div className="feature-monitor">
-            {featureVideoUrl ? (
-              <video
-                src={featureVideoUrl}
-                autoPlay
-                muted
-                loop
-                playsInline
-                controls={false}
-              />
-            ) : (
-              <div className="monitor-fallback">
-                <div className="monitor-topbar">
-                  <span>PRODUCTION MONITOR</span>
-                  <span>LIVE / 00:42:18</span>
-                </div>
-
-                <div className="monitor-body">
-                  <div className="monitor-copy">
-                    <span className="eyebrow">SYSTEM 04 / ACTIVE</span>
-                    <strong>
-                      Moving complex
-                      <br />
-                      ideas into
-                      <br />
-                      production.
-                    </strong>
-                  </div>
-
-                  <SystemCanvas />
-                </div>
-
-                <div className="monitor-bottom">
-                  <span>AI / DATA / AUTOMATION</span>
-                  <span>01 / 04</span>
-                </div>
-              </div>
-            )}
+            <SystemBlueprint />
           </div>
 
           <div className="feature-caption">
-            <span>PRODUCTION MONITOR / 2026</span>
-            <span>VIEW SELECTED WORK ↘</span>
+            <span>SYSTEM BLUEPRINT / HOW I BUILD</span>
+            <a href="#stack">FULL CAPABILITY MAP ↘</a>
           </div>
         </section>
 
@@ -960,6 +1342,10 @@ export default function Site() {
           <WebsitesShowcase />
         </section>
 
+        {/* Selected work is on hold while the case studies are rebuilt.
+            Restore this section and remove the maintenance version below
+            when they are ready.
+
         <section className="work-section section-shell" id="work">
           <SectionLabel index="06">Selected work</SectionLabel>
 
@@ -992,6 +1378,60 @@ export default function Site() {
               .map((project) => (
                 <ProjectCard key={project.slug} project={project} />
               ))}
+          </div>
+        </section>
+        */}
+
+        <section className="work-section section-shell" id="work">
+          <SectionLabel index="06">Selected work</SectionLabel>
+
+          <div className="section-heading">
+            <h2 data-reveal>
+              Products built
+              <br />
+              <em>end to end.</em>
+            </h2>
+            <p data-reveal>
+              A selection of systems across AI, automation, data, internal
+              tooling, and SaaS.
+            </p>
+          </div>
+
+          <div className="maintenance-card" data-reveal>
+            <div className="maintenance-status">
+              <span>
+                <i aria-hidden="true" />
+                Under maintenance
+              </span>
+              <span>Case studies / Rebuilding</span>
+            </div>
+
+            <div className="maintenance-body">
+              <h3>
+                Case studies are
+                <br />
+                <em>being rebuilt.</em>
+              </h3>
+              <p>
+                The project write-ups are getting fresh screenshots,
+                architecture notes, and results. The client websites above
+                are live in the meantime, and I am happy to walk through any
+                project on a call.
+              </p>
+            </div>
+
+            <div className="maintenance-actions">
+              <a className="button button--light" href="#websites">
+                See client websites <span>↑</span>
+              </a>
+              <a className="text-link" href="mailto:work@hrishikeshnetke.in">
+                Ask for a walkthrough <span>↗</span>
+              </a>
+            </div>
+
+            <span className="maintenance-progress" aria-hidden="true">
+              <b />
+            </span>
           </div>
         </section>
 
@@ -1028,15 +1468,30 @@ export default function Site() {
                 ))}
               </div>
 
-              <div className="skill-list">
-                {skills[activeSkill].map((skill, index) => (
-                  <div key={skill} className="skill-item">
-                    <span>{String(index + 1).padStart(2, "0")}</span>
-                    <strong>{skill}</strong>
-                    <i>↗</i>
-                  </div>
-                ))}
-              </div>
+              {/* Keyed by category so the tiles replay their entrance on
+                  every tab switch. */}
+              <ul className="skill-grid" key={activeSkill}>
+                {skills[activeSkill].map((skill, index) => {
+                  const icon = toolIcons[skill];
+
+                  return (
+                    <li
+                      key={skill}
+                      className="skill-tile"
+                      style={
+                        {
+                          "--i": index,
+                          "--brand": icon.color
+                        } as CSSProperties
+                      }
+                    >
+                      <span>{String(index + 1).padStart(2, "0")}</span>
+                      <ToolGlyph tool={skill} className="skill-icon" />
+                      <strong>{skill}</strong>
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           </div>
         </section>

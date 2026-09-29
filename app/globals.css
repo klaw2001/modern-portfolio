@@ -41,7 +41,6 @@ button {
 }
 
 .hero-bottom p,
-.statement-description,
 .about-copy p,
 .timeline-main p,
 .timeline-main li,
@@ -148,7 +147,7 @@ button {
 
 .brand-mark {
   font-family: var(--mono);
-  font-size: 17px;
+  font-size: 21px;
   font-weight: 700;
   letter-spacing: -0.08em;
 }
@@ -216,7 +215,10 @@ button {
 .archive-heading,
 .feature-caption,
 .monitor-topbar,
-.monitor-bottom {
+.monitor-bottom,
+.workflow-heading,
+.workflow-meta,
+.workflow-output {
   font-family: var(--mono);
   font-size: 10px;
   letter-spacing: 0.1em;
@@ -527,13 +529,91 @@ button {
   font-weight: 400;
 }
 
-.statement-description {
+
+.workflow-heading {
   grid-column: 2;
-  max-width: 390px;
-  margin: 70px 0 0;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 110px;
   color: var(--muted);
-  font-size: 16px;
+}
+
+.workflow {
+  grid-column: 2;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 44px 28px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.workflow li {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding-top: 30px;
+}
+
+.workflow-line {
+  position: absolute;
+  top: 0;
+  right: 0;
+  left: 0;
+  height: 1px;
+  background: var(--line);
+  transform-origin: left;
+}
+
+.workflow-signal {
+  position: absolute;
+  inset: -0.5px 0;
+  background: var(--vermilion);
+  transform: scaleX(0);
+  transform-origin: left;
+}
+
+.workflow-dot {
+  position: absolute;
+  top: -3px;
+  left: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--vermilion);
+}
+
+.workflow-meta {
+  display: flex;
+  gap: 14px;
+  color: var(--muted);
+}
+
+.workflow-meta span:first-child {
+  color: var(--vermilion);
+}
+
+.workflow h3 {
+  margin: 26px 0 14px;
+  font-size: clamp(1.35rem, 1.9vw, 2rem);
+  font-weight: 500;
+  line-height: 1;
+  letter-spacing: -0.05em;
+}
+
+.workflow p {
+  margin: 0;
+  color: var(--muted);
+  font-family: var(--body);
+  font-size: 15px;
   line-height: 1.55;
+  letter-spacing: -0.005em;
+}
+
+.workflow-output {
+  margin-top: auto;
+  padding-top: 22px;
+  color: var(--graphite);
 }
 
 .feature-section {
@@ -549,7 +629,7 @@ button {
   background: var(--graphite);
 }
 
-.monitor-fallback {
+.blueprint {
   display: flex;
   flex-direction: column;
   min-height: 68vh;
@@ -566,36 +646,256 @@ button {
 }
 
 .monitor-bottom {
+  align-items: center;
   border-top: 1px solid rgba(238, 234, 226, 0.15);
   border-bottom: 0;
 }
 
-.monitor-body {
-  position: relative;
+.blueprint-body {
   display: grid;
   flex: 1;
+  grid-template-columns: minmax(0, 1.7fr) minmax(300px, 1fr);
+}
+
+.blueprint-stage {
+  display: grid;
   place-items: center;
-  overflow: hidden;
+  padding: clamp(40px, 5vw, 80px) clamp(28px, 4vw, 64px);
+  background-image:
+    linear-gradient(rgba(238, 234, 226, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(238, 234, 226, 0.045) 1px, transparent 1px);
+  background-position: center;
+  background-size: 32px 32px;
 }
 
-.monitor-body .system-canvas {
-  opacity: 0.8;
-}
-
-.monitor-copy {
+.blueprint-map {
   position: relative;
-  z-index: 2;
-  text-align: center;
+  width: 100%;
+  aspect-ratio: var(--wide-ratio);
 }
 
-.monitor-copy strong {
+.blueprint-wires {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.blueprint-wires--tall {
+  display: none;
+}
+
+.blueprint-wires path {
+  fill: none;
+  stroke: rgba(238, 234, 226, 0.22);
+  stroke-width: 1;
+  transition: stroke 0.4s ease;
+}
+
+.blueprint-wires path.is-hosted {
+  stroke-dasharray: 3 5;
+}
+
+.blueprint-wires path.is-lit {
+  stroke: var(--vermilion);
+}
+
+.blueprint-signal {
+  fill: var(--vermilion);
+  opacity: 0;
+  filter: drop-shadow(0 0 6px var(--vermilion));
+}
+
+.blueprint-node,
+.blueprint-user {
+  position: absolute;
+  top: var(--y);
+  left: var(--x);
+  transform: translate(-50%, -50%);
+}
+
+.blueprint-node {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  color: rgba(238, 234, 226, 0.7);
+  white-space: nowrap;
+  background: var(--graphite);
+  border: 1px solid rgba(238, 234, 226, 0.24);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition:
+    color 0.3s ease,
+    border-color 0.3s ease,
+    box-shadow 0.3s ease;
+}
+
+.blueprint-node span {
+  color: var(--vermilion);
+}
+
+.blueprint-node:hover,
+.blueprint-node.is-active {
+  color: var(--paper);
+  border-color: var(--vermilion);
+}
+
+.blueprint-node.is-active {
+  box-shadow: 0 0 0 5px rgba(183, 57, 35, 0.16);
+}
+
+.blueprint-node:focus-visible {
+  outline: 1px solid var(--vermilion);
+  outline-offset: 5px;
+}
+
+.blueprint-user {
+  width: 9px;
+  height: 9px;
+  border: 1px solid var(--paper);
+  border-radius: 50%;
+}
+
+.blueprint-user::after {
+  position: absolute;
+  inset: -1px;
+  border: 1px solid var(--paper);
+  border-radius: 50%;
+  content: "";
+  animation: blueprint-ping 2.6s ease-out infinite;
+}
+
+.blueprint-user span {
+  position: absolute;
+  top: calc(100% + 12px);
+  left: 50%;
+  color: rgba(238, 234, 226, 0.5);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transform: translateX(-50%);
+}
+
+.blueprint-detail {
+  display: grid;
+  align-content: center;
+  padding: clamp(32px, 3.4vw, 56px);
+  border-left: 1px solid rgba(238, 234, 226, 0.15);
+}
+
+.blueprint-panel {
+  grid-area: 1 / 1;
+  visibility: hidden;
+  opacity: 0;
+}
+
+.blueprint-panel.is-active {
+  visibility: visible;
+  opacity: 1;
+  animation: blueprint-in 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.blueprint-panel strong {
   display: block;
-  margin-top: 22px;
+  max-width: 12ch;
+  margin-top: 20px;
   font-family: var(--serif);
-  font-size: clamp(3rem, 7vw, 8rem);
+  font-size: clamp(2.1rem, 3.2vw, 3.6rem);
   font-weight: 400;
-  line-height: 0.85;
-  letter-spacing: -0.08em;
+  line-height: 0.95;
+  letter-spacing: -0.05em;
+  text-wrap: balance;
+}
+
+.blueprint-panel p {
+  max-width: 400px;
+  margin: 22px 0 0;
+  color: rgba(238, 234, 226, 0.62);
+  font-family: var(--body);
+  font-size: 16px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+}
+
+.blueprint-tools {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 28px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.blueprint-tools li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 11px 6px 9px;
+  color: rgba(238, 234, 226, 0.78);
+  border: 1px solid rgba(238, 234, 226, 0.2);
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.blueprint-tool-icon {
+  flex: none;
+  width: 14px;
+  height: 14px;
+}
+
+.blueprint-legend {
+  display: flex;
+  gap: 22px;
+}
+
+.blueprint-legend span {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.blueprint-legend i {
+  width: 24px;
+  border-top: 1px solid var(--vermilion);
+}
+
+.blueprint-legend i.is-hosted {
+  border-top: 1px dashed rgba(238, 234, 226, 0.5);
+}
+
+.feature-caption a {
+  transition: color 0.3s ease;
+}
+
+.feature-caption a:hover {
+  color: var(--vermilion);
+}
+
+@keyframes blueprint-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+@keyframes blueprint-ping {
+  from {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+
+  to {
+    opacity: 0;
+    transform: scale(3.2);
+  }
 }
 
 .feature-caption {
@@ -1745,30 +2045,188 @@ a.proof-item:focus-visible {
   background: var(--graphite);
 }
 
-.skill-list {
+.skill-grid {
   display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.skill-item {
-  display: grid;
-  grid-template-columns: 50px 1fr auto;
+.skill-tile {
+  position: relative;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  padding: 22px 0;
+  justify-content: center;
+  gap: 20px;
+  min-width: 0;
+  aspect-ratio: 1 / 0.9;
+  padding: 30px 12px 22px;
+  border-right: 1px solid var(--line);
   border-bottom: 1px solid var(--line);
+  text-align: center;
+  transition: background-color 0.3s ease;
+  animation: skill-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+  animation-delay: calc(var(--i) * 45ms);
 }
 
-.skill-item span,
-.skill-item i {
+.skill-tile:nth-child(4n) {
+  border-right: 0;
+}
+
+.skill-tile span {
+  position: absolute;
+  top: 14px;
+  left: 14px;
   color: var(--vermilion);
   font-family: var(--mono);
   font-size: 10px;
-  font-style: normal;
 }
 
-.skill-item strong {
-  font-size: clamp(1.5rem, 3vw, 3rem);
+.skill-icon {
+  width: clamp(34px, 3.2vw, 48px);
+  height: clamp(34px, 3.2vw, 48px);
+  color: var(--graphite);
+  transition:
+    color 0.3s ease,
+    transform 0.4s cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+
+.skill-tile strong {
+  font-size: clamp(0.95rem, 1.15vw, 1.15rem);
   font-weight: 500;
-  letter-spacing: -0.06em;
+  line-height: 1.15;
+  letter-spacing: -0.04em;
+}
+
+@media (hover: hover) {
+  .skill-tile:hover {
+    background: var(--paper-deep);
+  }
+
+  .skill-tile:hover .skill-icon {
+    color: var(--brand, var(--vermilion));
+    transform: translateY(-4px);
+  }
+}
+
+@keyframes skill-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+}
+
+.maintenance-card {
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 56px 10vw;
+  align-items: end;
+  padding: clamp(28px, 4vw, 60px);
+  overflow: hidden;
+  border: 1px solid rgba(238, 234, 226, 0.18);
+  background: repeating-linear-gradient(
+    -45deg,
+    transparent 0 18px,
+    rgba(238, 234, 226, 0.03) 18px 19px
+  );
+}
+
+.maintenance-status {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+  padding-bottom: 22px;
+  border-bottom: 1px solid rgba(238, 234, 226, 0.18);
+  color: rgba(238, 234, 226, 0.5);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.maintenance-status span:first-child {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--paper);
+}
+
+.maintenance-status i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--vermilion);
+  animation: maintenance-pulse 1.8s ease-in-out infinite;
+}
+
+.maintenance-body h3 {
+  margin: 0;
+  font-size: clamp(2.4rem, 5vw, 5.5rem);
+  font-weight: 500;
+  line-height: 0.92;
+  letter-spacing: -0.075em;
+}
+
+.maintenance-body h3 em {
+  color: var(--vermilion);
+  font-family: var(--serif);
+  font-style: italic;
+  font-weight: 400;
+}
+
+.maintenance-body p {
+  max-width: 440px;
+  margin: 32px 0 0;
+  color: rgba(238, 234, 226, 0.6);
+  font-family: var(--body);
+  font-size: 15px;
+  line-height: 1.55;
+  letter-spacing: -0.005em;
+}
+
+.maintenance-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.maintenance-progress {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  height: 2px;
+  overflow: hidden;
+  background: rgba(238, 234, 226, 0.08);
+}
+
+.maintenance-progress b {
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 28%;
+  background: var(--vermilion);
+  animation: maintenance-scan 3.2s cubic-bezier(0.65, 0, 0.35, 1) infinite;
+}
+
+@keyframes maintenance-pulse {
+  50% {
+    box-shadow: 0 0 0 6px rgba(183, 57, 35, 0.2);
+  }
+}
+
+@keyframes maintenance-scan {
+  from {
+    transform: translateX(-100%);
+  }
+
+  to {
+    transform: translateX(360%);
+  }
 }
 
 .contact-section {
@@ -1953,7 +2411,44 @@ a.proof-item:focus-visible {
   text-transform: uppercase;
 }
 
+@media (min-width: 1100px) {
+  .eyebrow,
+  .timeline-date,
+  .project-label,
+  .archive-heading,
+  .feature-caption,
+  .monitor-topbar,
+  .monitor-bottom,
+  .workflow-heading,
+  .workflow-meta,
+  .workflow-output {
+    font-size: 12px;
+  }
+
+  .section-label {
+    font-size: 13px;
+  }
+
+  .blueprint-node,
+  .blueprint-tools li {
+    font-size: 12px;
+  }
+}
+
 @media (max-width: 1099px) {
+  .workflow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .blueprint-body {
+    grid-template-columns: 1fr;
+  }
+
+  .blueprint-detail {
+    border-top: 1px solid rgba(238, 234, 226, 0.15);
+    border-left: 0;
+  }
+
   .hero,
   .hero-copy {
     height: auto;
@@ -1982,6 +2477,18 @@ a.proof-item:focus-visible {
   .trust-clients {
     flex: 1;
     align-content: center;
+  }
+
+  .skill-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .skill-tile:nth-child(4n) {
+    border-right: 1px solid var(--line);
+  }
+
+  .skill-tile:nth-child(3n) {
+    border-right: 0;
   }
 }
 
@@ -2059,8 +2566,13 @@ a.proof-item:focus-visible {
     font-size: clamp(3.1rem, 14vw, 6rem);
   }
 
-  .statement-description {
-    margin-top: 55px;
+  .workflow-heading {
+    margin: 70px 0 24px;
+  }
+
+  .workflow {
+    grid-template-columns: 1fr;
+    gap: 36px;
   }
 
   .feature-section,
@@ -2078,12 +2590,59 @@ a.proof-item:focus-visible {
     margin-top: 28px;
   }
 
-  .monitor-fallback {
+  .blueprint {
     min-height: 500px;
   }
 
-  .monitor-copy strong {
-    font-size: 3.8rem;
+  .blueprint-stage {
+    padding: 36px 20px 44px;
+  }
+
+  .blueprint-map {
+    max-width: 420px;
+    aspect-ratio: var(--tall-ratio);
+  }
+
+  .blueprint-wires--wide {
+    display: none;
+  }
+
+  .blueprint-wires--tall {
+    display: block;
+  }
+
+  .blueprint-node,
+  .blueprint-user {
+    top: var(--ty);
+    left: var(--tx);
+  }
+
+  .blueprint-node {
+    gap: 6px;
+    padding: 8px 10px;
+    font-size: 10px;
+  }
+
+  .blueprint-user span {
+    top: 50%;
+    left: calc(100% + 12px);
+    transform: translateY(-50%);
+  }
+
+  .blueprint-detail {
+    padding: 32px 20px;
+  }
+
+  .blueprint-panel strong {
+    font-size: 2.3rem;
+  }
+
+  .blueprint-panel p {
+    font-size: 15px;
+  }
+
+  .blueprint-legend {
+    gap: 14px;
   }
 
   .feature-caption {
@@ -2271,6 +2830,40 @@ a.proof-item:focus-visible {
     font-size: 8px;
   }
 
+  .skill-tile {
+    gap: 14px;
+    padding: 28px 8px 16px;
+  }
+
+  .skill-tile span {
+    top: 10px;
+    left: 10px;
+    font-size: 8px;
+  }
+
+  .skill-tile strong {
+    font-size: 0.85rem;
+  }
+
+  .maintenance-card {
+    display: block;
+    padding: 24px 20px 32px;
+  }
+
+  .maintenance-status {
+    flex-direction: column;
+    gap: 10px;
+    font-size: 8px;
+  }
+
+  .maintenance-body {
+    margin: 48px 0;
+  }
+
+  .maintenance-body h3 {
+    font-size: clamp(2.4rem, 11vw, 4rem);
+  }
+
   .contact-inner {
     min-height: 100svh;
     padding-top: 100px;
@@ -2341,8 +2934,12 @@ a.proof-item:focus-visible {
     transform: none;
   }
 
+  .blueprint-user::after,
   .trust-stars i,
-  .trust-clients li {
+  .trust-clients li,
+  .skill-tile,
+  .maintenance-status i,
+  .maintenance-progress b {
     animation: none;
   }
 }

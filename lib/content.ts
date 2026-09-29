@@ -388,6 +388,41 @@ export const experience = [
   }
 ];
 
+export const workflow = [
+  {
+    number: "01",
+    phase: "DISCOVER",
+    title: "Understand the problem",
+    description:
+      "Talk to the people who will use it. Map the constraints, the data, and what success actually looks like.",
+    output: "Scope + success metric"
+  },
+  {
+    number: "02",
+    phase: "ARCHITECT",
+    title: "Design the system",
+    description:
+      "Data model, API contracts, and integrations planned before a single screen gets built.",
+    output: "Schema + API map"
+  },
+  {
+    number: "03",
+    phase: "BUILD",
+    title: "Ship in short loops",
+    description:
+      "Interface, backend, and automation built together, with something working to review at every step.",
+    output: "Working product"
+  },
+  {
+    number: "04",
+    phase: "LAUNCH",
+    title: "Run it in production",
+    description:
+      "Deploy, monitor, and refine on real usage until the system runs on its own.",
+    output: "Live system"
+  }
+];
+
 export const skills = {
   FRONTEND: [
     "React",
@@ -433,3 +468,107 @@ export const skills = {
     "kie.ai"
   ]
 } as const;
+
+export type Tool = (typeof skills)[keyof typeof skills][number];
+
+export type BlueprintNodeId =
+  | "interface"
+  | "api"
+  | "data"
+  | "ai"
+  | "services"
+  | "deploy";
+
+/** Parts of a typical product, shown as the system blueprint diagram. */
+export const blueprint: {
+  id: BlueprintNodeId;
+  number: string;
+  name: string;
+  title: string;
+  description: string;
+  tools: Tool[];
+}[] = [
+  {
+    id: "interface",
+    number: "01",
+    name: "Interface",
+    title: "Where people meet the product.",
+    description:
+      "Fast, accessible front ends that turn complex systems into screens people understand on the first visit.",
+    tools: [
+      "Next.js",
+      "React",
+      "TypeScript",
+      "Tailwind CSS",
+      "shadcn/ui",
+      "Framer Motion"
+    ]
+  },
+  {
+    id: "api",
+    number: "02",
+    name: "API",
+    title: "The contract everything talks through.",
+    description:
+      "Typed endpoints, auth, background jobs, and realtime channels that keep every part of the product in sync.",
+    tools: ["Node.js", "Express", "Prisma", "Socket.IO"]
+  },
+  {
+    id: "data",
+    number: "03",
+    name: "Data",
+    title: "Models shaped around real usage.",
+    description:
+      "Relational and document schemas, indexes, and caching designed for the queries the product actually runs.",
+    tools: ["PostgreSQL", "MongoDB", "Redis"]
+  },
+  {
+    id: "ai",
+    number: "04",
+    name: "AI layer",
+    title: "Models that answer from your data.",
+    description:
+      "LLM features grounded in your own documents with retrieval and structured output, plus workflows that act on the result.",
+    tools: [
+      "OpenAI API",
+      "GPT 4o",
+      "LangChain",
+      "Pinecone",
+      "RAG Pipelines",
+      "n8n"
+    ]
+  },
+  {
+    id: "services",
+    number: "05",
+    name: "Services",
+    title: "Specialist engines, wired in.",
+    description:
+      "Video calls, rich text editing, voice, and generative media plugged in behind the API instead of rebuilt from scratch.",
+    tools: [
+      "Jitsi",
+      "Tiptap",
+      "ElevenLabs",
+      "Kling",
+      "Veo",
+      "Runway ML",
+      "kie.ai"
+    ]
+  },
+  {
+    id: "deploy",
+    number: "06",
+    name: "Deploy",
+    title: "Shipped and kept running.",
+    description:
+      "Containerised builds, CI pipelines, and edge or VPS hosting so every change reaches production safely.",
+    tools: [
+      "Docker",
+      "Docker Compose",
+      "Vercel",
+      "Nginx",
+      "GitHub Actions",
+      "VPS Deployment"
+    ]
+  }
+];
