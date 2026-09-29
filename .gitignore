@@ -10,3 +10,5 @@ yarn-error.log*
 pnpm-debug.log*
 *.tsbuildinfo
 next-env.d.ts
+/Claude outputs/
+/public/brand/
