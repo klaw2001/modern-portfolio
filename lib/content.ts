@@ -236,7 +236,8 @@ export const websites: Website[] = [
     summary:
       "Online boutique for a fine jeweller crafting since 1907, with gold and silver collections, a bespoke jewellery service and free insured shipping.",
     accent: "#b08d57",
-    layout: "storefront"
+    layout: "storefront",
+    image: "/websites/kings.jpg"
   },
   {
     slug: "wattlecorp",
@@ -247,8 +248,9 @@ export const websites: Website[] = [
     location: "UAE",
     summary:
       "Website for a cybersecurity firm with teams in the UAE, USA and India, presenting the consulting and security services it offers businesses that need to protect customer data.",
-    accent: "#2f5bd3",
-    layout: "landing"
+    accent: "#e0452b",
+    layout: "landing",
+    image: "/websites/wattlecorp.jpg"
   },
   {
     slug: "leadesign",
@@ -259,8 +261,9 @@ export const websites: Website[] = [
     location: "Canada",
     summary:
       "Website for a Canadian interior design studio, presenting its design and renovation services, a process shaped by client input, and a blog on interior design trends.",
-    accent: "#9a7658",
-    layout: "portfolio"
+    accent: "#c9a45c",
+    layout: "portfolio",
+    image: "/websites/leadesign.jpg"
   },
   {
     slug: "aliff",
@@ -271,8 +274,9 @@ export const websites: Website[] = [
     location: "India",
     summary:
       "Study abroad platform where students explore more than 500 universities across 19 countries, compare courses, track applications in real time and get counsellor help with SOPs and visas.",
-    accent: "#e36a2e",
-    layout: "landing"
+    accent: "#4f6ef7",
+    layout: "landing",
+    image: "/websites/aliff.jpg"
   },
   {
     slug: "crawlmagic",
@@ -283,8 +287,9 @@ export const websites: Website[] = [
     location: "India",
     summary:
       "Website for a web data company with over 1.5 billion records extracted, presenting its scraping, crawling and data API services for ecommerce, travel and real estate businesses.",
-    accent: "#6d4fe0",
-    layout: "landing"
+    accent: "#5b4fe0",
+    layout: "landing",
+    image: "/websites/crawlmagic.jpg"
   },
   {
     slug: "aikya",
@@ -295,8 +300,9 @@ export const websites: Website[] = [
     location: "India",
     summary:
       "Online jewellery store for diamond rings, earrings and necklaces, built around elegant pieces at affordable prices, with free shipping and returns within 7 days.",
-    accent: "#b9787f",
-    layout: "storefront"
+    accent: "#c0836a",
+    layout: "storefront",
+    image: "/websites/aikya.jpg"
   },
   {
     slug: "supermax",
@@ -307,8 +313,9 @@ export const websites: Website[] = [
     location: "India",
     summary:
       "Website for a ship chandler supplying ship stores, provisions and repair services to vessels at every major Indian port.",
-    accent: "#1f5b8e",
-    layout: "landing"
+    accent: "#f2b53a",
+    layout: "landing",
+    image: "/websites/supermax.jpg"
   }
 ];
 

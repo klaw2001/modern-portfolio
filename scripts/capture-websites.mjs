@@ -41,7 +41,10 @@ const HIDE = [
   "iframe[title*='chat' i]",
   "[class*='whatsapp' i]",
   "[id*='whatsapp' i]",
-  "#credential_picker_container"
+  "#credential_picker_container",
+  ".grecaptcha-badge",
+  "#cookie-popup",
+  "[class*='zsiq']"
 ];
 
 async function dismissOverlays(page) {
@@ -84,6 +87,25 @@ for (const site of targets) {
   try {
     await page.goto(site.url, { waitUntil: "load", timeout: 60_000 });
     await page.waitForLoadState("networkidle", { timeout: 15_000 }).catch(() => {});
+
+    // Some sites send automated visitors elsewhere; never save the wrong page.
+    const host = new URL(page.url()).hostname.replace(/^www\./, "");
+    if (host !== site.domain) {
+      throw new Error(`redirected to ${page.url()}`);
+    }
+
+    // Wait for images in the first screen to finish loading.
+    await page
+      .waitForFunction(
+        () =>
+          [...document.images]
+            .filter((image) => image.getBoundingClientRect().top < innerHeight)
+            .every((image) => image.complete),
+        null,
+        { timeout: 15_000 }
+      )
+      .catch(() => {});
+
     // Give delayed popups and hero animations time to appear, then clear them.
     await page.waitForTimeout(3500);
     await dismissOverlays(page);
