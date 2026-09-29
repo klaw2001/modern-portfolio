@@ -1,3 +1,20 @@
+/** Used for page metadata and structured data. */
+export const site = {
+  name: "Hrishikesh Netke",
+  title: "Hrishikesh Netke | Full Stack Developer in Mumbai",
+  description:
+    "Hrishikesh Netke is a full stack developer in Mumbai, India, building AI, data, automation and SaaS products end to end, from idea to production.",
+  url: "https://hrishikeshnetke.in",
+  email: "work@hrishikeshnetke.in",
+  twitter: "@netke2611",
+  socials: [
+    "https://github.com/hrishikeshnetke",
+    "https://www.linkedin.com/in/hrishikesh-netke-b62b09231/",
+    "https://x.com/netke2611",
+    "https://www.instagram.com/ig_klaw/"
+  ]
+};
+
 export type Project = {
   slug: string;
   number: string;
