@@ -241,7 +241,8 @@ export const websites: Website[] = [
     summary:
       "Online store for a Swedish jewellery brand known for minimal, adjustable rings, bracelets and chains, shipping to customers across Europe, the US and Australia.",
     accent: "#8b7e6a",
-    layout: "storefront"
+    layout: "storefront",
+    image: "/websites/vacier.jpg"
   },
   {
     slug: "kings",

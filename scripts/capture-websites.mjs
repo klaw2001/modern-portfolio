@@ -33,6 +33,7 @@ const HIDE = [
   ".cky-consent-container",
   "#cmplz-cookiebanner-container",
   "[class*='klaviyo-form']",
+  "[class*='kl-teaser']",
   "#tidio-chat",
   "#hubspot-messages-iframe-container",
   ".intercom-lightweight-app",
@@ -44,7 +45,9 @@ const HIDE = [
   "#credential_picker_container",
   ".grecaptcha-badge",
   "#cookie-popup",
-  "[class*='zsiq']"
+  "[class*='zsiq']",
+  // Headless Chromium can't play H.264, so hero videos show native controls.
+  "video::-webkit-media-controls"
 ];
 
 async function dismissOverlays(page) {
@@ -75,13 +78,22 @@ const browser = await chromium.launch({
   // Route through HTTPS_PROXY when one is configured.
   proxy: process.env.HTTPS_PROXY
     ? { server: process.env.HTTPS_PROXY, bypass: process.env.NO_PROXY }
-    : undefined
+    : undefined,
+  // Some sites (vacier.com) send detected automation to google.com.
+  args: ["--disable-blink-features=AutomationControlled"]
 });
 
 for (const site of targets) {
   const page = await browser.newPage({
     viewport: { width: 1440, height: 900 },
-    locale: "en-US"
+    locale: "en-US",
+    // The default headless user agent says "HeadlessChrome".
+    userAgent:
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/141.0.0.0 Safari/537.36"
+  });
+
+  await page.addInitScript(() => {
+    Object.defineProperty(navigator, "webdriver", { get: () => undefined });
   });
 
   try {
