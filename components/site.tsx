@@ -15,6 +15,7 @@ import {
   experience,
   featuredProjects,
   projects,
+  reputation,
   skills,
   websites,
   type Website
@@ -215,6 +216,39 @@ function SectionLabel({
     <div className="section-label">
       <span>{index}</span>
       <span>{children}</span>
+    </div>
+  );
+}
+
+function ClientProof() {
+  return (
+    <div className="client-proof" data-reveal>
+      <a
+        className="proof-item"
+        href={reputation.reviewsUrl}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <strong>
+          {reputation.rating}
+          <span className="proof-stars" aria-hidden="true">
+            ★★★★★
+          </span>
+        </strong>
+        <small>
+          Rated on Google <span>↗</span>
+        </small>
+      </a>
+
+      <div className="proof-item">
+        <strong>{reputation.clientLocations.join(" · ")}</strong>
+        <small>Where my clients are</small>
+      </div>
+
+      <div className="proof-item">
+        <strong>{String(websites.length).padStart(2, "0")}</strong>
+        <small>Sites built and live</small>
+      </div>
     </div>
   );
 }
@@ -489,7 +523,12 @@ function WebsitesShowcase() {
     event: ReactPointerEvent<HTMLButtonElement>,
     index: number
   ) => {
-    if (event.pointerType === "mouse") {
+    // In the stacked layout a click scrolls the list under the cursor, so
+    // hovering would reselect whichever row passes by. Only click there.
+    if (
+      event.pointerType === "mouse" &&
+      !window.matchMedia("(max-width: 800px)").matches
+    ) {
       select(index);
     }
   };
@@ -508,7 +547,7 @@ function WebsitesShowcase() {
               onFocus={() => select(index)}
               onPointerEnter={(event) => handleRowPointer(event, index)}
             >
-              <span className="site-row-year">{website.year}</span>
+              <span className="site-row-place">{website.location}</span>
               <span className="site-row-name">
                 {website.name}
                 <small>
@@ -586,16 +625,14 @@ function WebsitesShowcase() {
         <div className="site-details" aria-live="polite">
           <p>{active.summary}</p>
 
-          <dl>
-            <div>
-              <dt>Role</dt>
-              <dd>{active.scope.join(", ")}</dd>
-            </div>
-            <div>
-              <dt>Built with</dt>
-              <dd>{active.stack.join(", ")}</dd>
-            </div>
-          </dl>
+          <a
+            className="site-visit"
+            href={active.url}
+            target="_blank"
+            rel="noreferrer"
+          >
+            Visit {active.domain} <span>↗</span>
+          </a>
         </div>
       </div>
     </div>
@@ -711,10 +748,24 @@ export default function Site() {
             </h1>
 
             <div className="hero-bottom" data-fade>
-              <p>
-                Full-stack developer building AI, data, automation, and SaaS
-                products end-to-end.
-              </p>
+              <div className="hero-intro">
+                <p>
+                  Full stack developer building AI, data, automation, and SaaS
+                  products end to end.
+                </p>
+
+                <a
+                  className="hero-proof"
+                  href={reputation.reviewsUrl}
+                  target="_blank"
+                  rel="noreferrer"
+                >
+                  <span aria-hidden="true">★★★★★</span>
+                  {reputation.rating} on Google · Clients in{" "}
+                  {reputation.clientLocations.slice(0, -1).join(", ")} and{" "}
+                  {reputation.clientLocations.at(-1)}
+                </a>
+              </div>
 
               <div className="hero-actions">
                 <a className="button button--dark" href="#work">
@@ -743,7 +794,7 @@ export default function Site() {
           </h2>
 
           <p className="statement-description" data-reveal>
-            I build the layer between complex systems and useful products —
+            I build the layer between complex systems and useful products,
             connecting interfaces, APIs, data, automation, and production
             infrastructure into experiences people can actually use.
           </p>
@@ -786,7 +837,7 @@ export default function Site() {
 
                 <div className="monitor-bottom">
                   <span>AI / DATA / AUTOMATION</span>
-                  <span>01 — 04</span>
+                  <span>01 / 04</span>
                 </div>
               </div>
             )}
@@ -810,8 +861,8 @@ export default function Site() {
 
             <div className="about-copy" data-reveal>
               <p>
-                Software Developer based in Mumbai, India, building full-stack
-                products end-to-end.
+                Software Developer based in Mumbai, India, building full stack
+                products end to end.
               </p>
               <p>
                 My work spans AI platforms, data products, automation tools,
@@ -819,7 +870,7 @@ export default function Site() {
               </p>
               <p>
                 From database design and API architecture to interface
-                development, deployment, and production workflows — I like
+                development, deployment, and production workflows, I like
                 owning the entire system.
               </p>
             </div>
@@ -865,10 +916,13 @@ export default function Site() {
               <em>the open web.</em>
             </h2>
             <p data-reveal>
-              Storefronts, clinics, publications, and studios — designed,
-              built, and launched for clients. Pick a site to preview it.
+              Jewellery brands, a cybersecurity firm, an interior design
+              studio, a study abroad platform and more, designed and built for
+              clients around the world. Pick a site to preview it.
             </p>
           </div>
+
+          <ClientProof />
 
           <WebsitesShowcase />
         </section>
@@ -880,7 +934,7 @@ export default function Site() {
             <h2 data-reveal>
               Products built
               <br />
-              <em>end-to-end.</em>
+              <em>end to end.</em>
             </h2>
             <p data-reveal>
               A selection of systems across AI, automation, data, internal
@@ -967,7 +1021,7 @@ export default function Site() {
             </h2>
 
             <p data-reveal>
-              Available for new projects, consulting, or full-time roles.
+              Available for new projects, consulting, or full time roles.
             </p>
 
             <div className="contact-actions" data-reveal>
@@ -1014,7 +1068,7 @@ export default function Site() {
 
         <footer className="site-footer">
           <span>HN / 2026</span>
-          <span>BUILDING FULL-STACK PRODUCTS END-TO-END</span>
+          <span>BUILDING FULL STACK PRODUCTS END TO END</span>
           <span>MUMBAI, INDIA</span>
         </footer>
       </main>

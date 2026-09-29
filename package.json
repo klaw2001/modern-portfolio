@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint ."
+    "lint": "eslint .",
+    "capture:websites": "node scripts/capture-websites.mjs"
   },
   "dependencies": {
     "gsap": "latest",
@@ -20,6 +21,7 @@
     "@types/react-dom": "latest",
     "eslint": "latest",
     "eslint-config-next": "latest",
+    "playwright": "^1.56.1",
     "typescript": "latest"
   }
 }

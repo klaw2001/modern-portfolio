@@ -9,14 +9,14 @@ const geist = Geist({
 });
 
 export const metadata: Metadata = {
-  title: "Hrishikesh Netke — Systems in Motion",
+  title: "Hrishikesh Netke | Systems in Motion",
   description:
-    "Hrishikesh Netke is a Mumbai-based software developer building full-stack products end-to-end.",
+    "Hrishikesh Netke is a software developer in Mumbai, India, building full stack products end to end.",
   metadataBase: new URL("https://hrishikeshnetke.in"),
   openGraph: {
-    title: "Hrishikesh Netke — Systems in Motion",
+    title: "Hrishikesh Netke | Systems in Motion",
     description:
-      "Full-stack products, AI systems, automation platforms, and production-ready digital tools.",
+      "Full stack products, AI systems, automation platforms, and digital tools built for production.",
     type: "website"
   }
 };
