@@ -220,6 +220,50 @@ function SectionLabel({
   );
 }
 
+function HeroTrust() {
+  return (
+    <aside className="hero-trust" data-fade aria-label="Reviews and clients">
+      <a
+        className="trust-rating"
+        href={reputation.reviewsUrl}
+        target="_blank"
+        rel="noreferrer"
+      >
+        <strong>{reputation.rating}</strong>
+
+        <span className="trust-rating-meta">
+          <span className="trust-stars" aria-label="5 out of 5 stars">
+            {[0, 1, 2, 3, 4].map((index) => (
+              <i
+                key={index}
+                style={{ "--i": index } as CSSProperties}
+                aria-hidden="true"
+              >
+                ★
+              </i>
+            ))}
+          </span>
+          <small>
+            Google reviews <span>↗</span>
+          </small>
+        </span>
+      </a>
+
+      <div className="trust-clients">
+        <small>Clients across</small>
+
+        <ul>
+          {reputation.clientLocations.map((location, index) => (
+            <li key={location} style={{ "--i": index } as CSSProperties}>
+              {location}
+            </li>
+          ))}
+        </ul>
+      </div>
+    </aside>
+  );
+}
+
 function ClientProof() {
   return (
     <div className="client-proof" data-reveal>
@@ -740,34 +784,23 @@ export default function Site() {
             </p>
 
             <h1>
-              <span className="hero-line">BUILDING PRODUCTS</span>
+              <span className="hero-line">BUILDING</span>
+              <span className="hero-line">PRODUCTS</span>
               <span className="hero-line">FROM IDEA</span>
               <span className="hero-line hero-line--accent">
                 TO PRODUCTION.
               </span>
             </h1>
 
-            <div className="hero-bottom" data-fade>
-              <div className="hero-intro">
-                <p>
-                  Full stack developer building AI, data, automation, and SaaS
-                  products end to end.
-                </p>
+            <div className="hero-bottom">
+              <p data-fade>
+                Full stack developer building AI, data, automation, and SaaS
+                products end to end.
+              </p>
 
-                <a
-                  className="hero-proof"
-                  href={reputation.reviewsUrl}
-                  target="_blank"
-                  rel="noreferrer"
-                >
-                  <span aria-hidden="true">★★★★★</span>
-                  {reputation.rating} on Google · Clients in{" "}
-                  {reputation.clientLocations.slice(0, -1).join(", ")} and{" "}
-                  {reputation.clientLocations.at(-1)}
-                </a>
-              </div>
+              <HeroTrust />
 
-              <div className="hero-actions">
+              <div className="hero-actions" data-fade>
                 <a className="button button--dark" href="#work">
                   Explore selected work <span>↘</span>
                 </a>

@@ -316,7 +316,7 @@ export const reputation = {
   rating: "5.0",
   /** Where "Rated on Google" links to. Swap in the Google Maps review link when available. */
   reviewsUrl: "https://www.google.com/search?q=Hrishikesh+Netke",
-  clientLocations: ["Canada", "Israel", "Dubai", "India"]
+  clientLocations: ["Canada", "Israel", "Dubai", "Sweden", "India"]
 };
 
 export const experience = [
