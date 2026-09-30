@@ -651,6 +651,89 @@ button {
   border-bottom: 0;
 }
 
+.blueprint-tabs {
+  display: flex;
+  align-items: stretch;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(238, 234, 226, 0.15);
+}
+
+.blueprint-tablist {
+  display: flex;
+}
+
+.blueprint-tab {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 16px 24px;
+  color: rgba(238, 234, 226, 0.5);
+  background: transparent;
+  border-right: 1px solid rgba(238, 234, 226, 0.15);
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: color 0.3s ease;
+}
+
+.blueprint-tab:first-child {
+  padding-left: 22px;
+}
+
+.blueprint-tab i {
+  width: 7px;
+  height: 7px;
+  border: 1px solid currentColor;
+  border-radius: 50%;
+  transition:
+    background-color 0.3s ease,
+    border-color 0.3s ease;
+}
+
+.blueprint-tab::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--vermilion);
+  content: "";
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 0.5s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.blueprint-tab:hover,
+.blueprint-tab[aria-selected="true"] {
+  color: var(--paper);
+}
+
+.blueprint-tab[aria-selected="true"] i {
+  background: var(--vermilion);
+  border-color: var(--vermilion);
+}
+
+.blueprint-tab[aria-selected="true"]::after {
+  transform: scaleX(1);
+}
+
+.blueprint-tab:focus-visible {
+  outline: 1px solid var(--vermilion);
+  outline-offset: -6px;
+}
+
+.blueprint-note {
+  align-self: center;
+  padding: 0 22px;
+  color: rgba(238, 234, 226, 0.5);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
 .blueprint-body {
   display: grid;
   flex: 1;
@@ -672,6 +755,7 @@ button {
   position: relative;
   width: 100%;
   aspect-ratio: var(--wide-ratio);
+  animation: blueprint-fade 0.6s ease both;
 }
 
 .blueprint-wires {
@@ -851,6 +935,17 @@ button {
   height: 14px;
 }
 
+.blueprint-tag-dot {
+  flex: none;
+  width: 14px;
+  height: 14px;
+  background: radial-gradient(
+    circle,
+    var(--vermilion) 0 2.5px,
+    transparent 3px
+  );
+}
+
 .blueprint-legend {
   display: flex;
   gap: 22px;
@@ -877,6 +972,12 @@ button {
 
 .feature-caption a:hover {
   color: var(--vermilion);
+}
+
+@keyframes blueprint-fade {
+  from {
+    opacity: 0;
+  }
 }
 
 @keyframes blueprint-in {
@@ -2430,7 +2531,12 @@ a.proof-item:focus-visible {
   }
 
   .blueprint-node,
+  .blueprint-tab,
   .blueprint-tools li {
+    font-size: 12px;
+  }
+
+  .blueprint-note {
     font-size: 12px;
   }
 }
@@ -2592,6 +2698,28 @@ a.proof-item:focus-visible {
 
   .blueprint {
     min-height: 500px;
+  }
+
+  .blueprint-tab {
+    flex: 1;
+    justify-content: center;
+    padding: 15px 12px;
+  }
+
+  .blueprint-tablist {
+    flex: 1;
+  }
+
+  .blueprint-tab:first-child {
+    padding-left: 12px;
+  }
+
+  .blueprint-tab:last-child {
+    border-right: 0;
+  }
+
+  .blueprint-note {
+    display: none;
   }
 
   .blueprint-stage {

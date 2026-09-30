@@ -471,7 +471,7 @@ export const skills = {
 
 export type Tool = (typeof skills)[keyof typeof skills][number];
 
-export type BlueprintNodeId =
+export type AppNodeId =
   | "interface"
   | "api"
   | "data"
@@ -479,96 +479,212 @@ export type BlueprintNodeId =
   | "services"
   | "deploy";
 
-/** Parts of a typical product, shown as the system blueprint diagram. */
-export const blueprint: {
-  id: BlueprintNodeId;
+export type WebNodeId =
+  | "goal"
+  | "structure"
+  | "design"
+  | "build"
+  | "seo"
+  | "launch";
+
+export type BlueprintView = "app" | "web";
+
+export type BlueprintNode<Id extends string> = {
+  id: Id;
   number: string;
   name: string;
   title: string;
   description: string;
-  tools: Tool[];
-}[] = [
-  {
-    id: "interface",
-    number: "01",
-    name: "Interface",
-    title: "Where people meet the product.",
-    description:
-      "Fast, accessible front ends that turn complex systems into screens people understand on the first visit.",
-    tools: [
-      "Next.js",
-      "React",
-      "TypeScript",
-      "Tailwind CSS",
-      "shadcn/ui",
-      "Framer Motion"
+  /** A tool shows its logo; any other tag is a plain label. */
+  tags: string[];
+};
+
+type Blueprint<Id extends string> = {
+  tab: string;
+  /** One line under the tabs saying what this view is for. */
+  note: string;
+  title: string;
+  /** What travels along the solid wires. */
+  flow: string;
+  /** What the dashed wires mean. */
+  hosted: string;
+  /** Part selected when the view opens. */
+  start: Id;
+  nodes: BlueprintNode<Id>[];
+};
+
+/** Parts of a typical product and of a typical website, shown as blueprints. */
+export const blueprints: {
+  app: Blueprint<AppNodeId>;
+  web: Blueprint<WebNodeId>;
+} = {
+  app: {
+    tab: "App",
+    note: "Products, dashboards and automation",
+    title: "System blueprint",
+    flow: "Request",
+    hosted: "Runs on",
+    start: "api",
+    nodes: [
+      {
+        id: "interface",
+        number: "01",
+        name: "Interface",
+        title: "Where people meet the product.",
+        description:
+          "Fast, accessible front ends that turn complex systems into screens people understand on the first visit.",
+        tags: [
+          "Next.js",
+          "React",
+          "TypeScript",
+          "Tailwind CSS",
+          "shadcn/ui",
+          "Framer Motion"
+        ]
+      },
+      {
+        id: "api",
+        number: "02",
+        name: "API",
+        title: "The contract everything talks through.",
+        description:
+          "Typed endpoints, auth, background jobs, and realtime channels that keep every part of the product in sync.",
+        tags: ["Node.js", "Express", "Prisma", "Socket.IO"]
+      },
+      {
+        id: "data",
+        number: "03",
+        name: "Data",
+        title: "Models shaped around real usage.",
+        description:
+          "Relational and document schemas, indexes, and caching designed for the queries the product actually runs.",
+        tags: ["PostgreSQL", "MongoDB", "Redis"]
+      },
+      {
+        id: "ai",
+        number: "04",
+        name: "AI layer",
+        title: "Models that answer from your data.",
+        description:
+          "LLM features grounded in your own documents with retrieval and structured output, plus workflows that act on the result.",
+        tags: [
+          "OpenAI API",
+          "GPT 4o",
+          "LangChain",
+          "Pinecone",
+          "RAG Pipelines",
+          "n8n"
+        ]
+      },
+      {
+        id: "services",
+        number: "05",
+        name: "Services",
+        title: "Specialist engines, wired in.",
+        description:
+          "Video calls, rich text editing, voice, and generative media plugged in behind the API instead of rebuilt from scratch.",
+        tags: [
+          "Jitsi",
+          "Tiptap",
+          "ElevenLabs",
+          "Kling",
+          "Veo",
+          "Runway ML",
+          "kie.ai"
+        ]
+      },
+      {
+        id: "deploy",
+        number: "06",
+        name: "Deploy",
+        title: "Shipped and kept running.",
+        description:
+          "Containerised builds, CI pipelines, and edge or VPS hosting so every change reaches production safely.",
+        tags: [
+          "Docker",
+          "Docker Compose",
+          "Vercel",
+          "Nginx",
+          "GitHub Actions",
+          "VPS Deployment"
+        ]
+      }
     ]
   },
-  {
-    id: "api",
-    number: "02",
-    name: "API",
-    title: "The contract everything talks through.",
-    description:
-      "Typed endpoints, auth, background jobs, and realtime channels that keep every part of the product in sync.",
-    tools: ["Node.js", "Express", "Prisma", "Socket.IO"]
-  },
-  {
-    id: "data",
-    number: "03",
-    name: "Data",
-    title: "Models shaped around real usage.",
-    description:
-      "Relational and document schemas, indexes, and caching designed for the queries the product actually runs.",
-    tools: ["PostgreSQL", "MongoDB", "Redis"]
-  },
-  {
-    id: "ai",
-    number: "04",
-    name: "AI layer",
-    title: "Models that answer from your data.",
-    description:
-      "LLM features grounded in your own documents with retrieval and structured output, plus workflows that act on the result.",
-    tools: [
-      "OpenAI API",
-      "GPT 4o",
-      "LangChain",
-      "Pinecone",
-      "RAG Pipelines",
-      "n8n"
-    ]
-  },
-  {
-    id: "services",
-    number: "05",
-    name: "Services",
-    title: "Specialist engines, wired in.",
-    description:
-      "Video calls, rich text editing, voice, and generative media plugged in behind the API instead of rebuilt from scratch.",
-    tools: [
-      "Jitsi",
-      "Tiptap",
-      "ElevenLabs",
-      "Kling",
-      "Veo",
-      "Runway ML",
-      "kie.ai"
-    ]
-  },
-  {
-    id: "deploy",
-    number: "06",
-    name: "Deploy",
-    title: "Shipped and kept running.",
-    description:
-      "Containerised builds, CI pipelines, and edge or VPS hosting so every change reaches production safely.",
-    tools: [
-      "Docker",
-      "Docker Compose",
-      "Vercel",
-      "Nginx",
-      "GitHub Actions",
-      "VPS Deployment"
+  web: {
+    tab: "Web design",
+    note: "Websites built to be found and to convert",
+    title: "Website blueprint",
+    flow: "Brief",
+    hosted: "Hosted on",
+    start: "build",
+    nodes: [
+      {
+        id: "goal",
+        number: "01",
+        name: "Goal",
+        title: "Start from what it must achieve.",
+        description:
+          "Before any design, we pin down who the site is for, the one action a visitor should take, and the number that proves it worked.",
+        tags: ["Audience", "Offer", "Primary action", "Success metric"]
+      },
+      {
+        id: "structure",
+        number: "02",
+        name: "Structure",
+        title: "Every page has one job.",
+        description:
+          "Sitemap, page hierarchy, and copy laid out around the visitor's path, so each page leads to the next step instead of a dead end.",
+        tags: ["Sitemap", "Wireframes", "Messaging", "Calls to action"]
+      },
+      {
+        id: "design",
+        number: "03",
+        name: "Design",
+        title: "Trust earned in the first seconds.",
+        description:
+          "Responsive layouts, type, and motion tuned to your brand, checked for contrast and touch targets on real phones.",
+        tags: [
+          "Tailwind CSS",
+          "shadcn/ui",
+          "Framer Motion",
+          "Responsive",
+          "Accessible"
+        ]
+      },
+      {
+        id: "build",
+        number: "04",
+        name: "Build",
+        title: "Rendered on the server, ready on arrival.",
+        description:
+          "Next.js pre-renders every page to HTML, so search engines read the full content and visitors see it before any JavaScript loads.",
+        tags: ["Next.js", "React", "TypeScript", "Pre-rendered pages"]
+      },
+      {
+        id: "seo",
+        number: "05",
+        name: "SEO & Speed",
+        title: "Found on Google, fast on mobile.",
+        description:
+          "Metadata, sitemap, structured data, and optimised images and fonts, tuned against Core Web Vitals so pages rank and load quickly.",
+        tags: [
+          "Metadata",
+          "Sitemap",
+          "Structured data",
+          "Core Web Vitals",
+          "Image optimisation"
+        ]
+      },
+      {
+        id: "launch",
+        number: "06",
+        name: "Launch",
+        title: "Live worldwide, updated with a push.",
+        description:
+          "Vercel serves the site from a global edge network with HTTPS on your own domain, and every change gets a preview link before it goes live.",
+        tags: ["Vercel", "Edge network", "Preview deploys", "Custom domain"]
+      }
     ]
   }
-];
+};

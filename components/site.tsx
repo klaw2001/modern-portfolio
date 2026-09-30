@@ -8,21 +8,24 @@ import {
   useState,
   useSyncExternalStore,
   type CSSProperties,
+  type KeyboardEvent as ReactKeyboardEvent,
   type PointerEvent as ReactPointerEvent
 } from "react";
 import gsap from "gsap";
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import {
-  blueprint,
+  blueprints,
   experience,
   projects,
   reputation,
   skills,
   websites,
   workflow,
-  type BlueprintNodeId,
+  type AppNodeId,
+  type BlueprintView,
   type Tool,
-  type Website
+  type Website,
+  type WebNodeId
 } from "@/lib/content";
 import { toolIcons } from "@/lib/tool-icons";
 
@@ -433,25 +436,29 @@ function ToolGlyph({ tool, className }: { tool: Tool; className: string }) {
 
 type Point = [x: number, y: number];
 
-type BlueprintLayout = {
+type BlueprintLayout<Id extends string> = {
   width: number;
   height: number;
   user: Point;
-  nodes: Record<BlueprintNodeId, Point>;
-  /** Wires into "deploy" are drawn dashed: the part runs on it. */
+  nodes: Record<Id, Point>;
   edges: {
-    from: BlueprintNodeId | "user";
-    to: BlueprintNodeId;
+    from: Id | "user";
+    to: Id;
     path: string;
-    /** Share of each loop when the request signal runs along this wire. */
+    /** Drawn dashed: the part runs on what it connects to. */
+    hosted?: boolean;
+    /** Share of each loop when the signal runs along this wire. */
     signal?: [start: number, end: number];
   }[];
 };
 
+type BlueprintShape = "wide" | "tall";
+
 const SIGNAL_LOOP = 5200;
 
-// The same system drawn twice: wide beside the detail panel, tall on phones.
-const BLUEPRINT_LAYOUTS: Record<"wide" | "tall", BlueprintLayout> = {
+// Each view is drawn twice: wide beside the detail panel, tall on phones.
+// Both views share one canvas size so the monitor never resizes on a tab change.
+const APP_LAYOUT = {
   wide: {
     width: 920,
     height: 500,
@@ -485,10 +492,10 @@ const BLUEPRINT_LAYOUTS: Record<"wide" | "tall", BlueprintLayout> = {
         path: "M500 110 V190 H790 V270",
         signal: [0.32, 0.58]
       },
-      { from: "interface", to: "deploy", path: "M260 110 V410" },
-      { from: "data", to: "deploy", path: "M500 270 V410" },
-      { from: "services", to: "deploy", path: "M790 270 V410" },
-      { from: "deploy", to: "deploy", path: "M150 410 H850" }
+      { from: "interface", to: "deploy", path: "M260 110 V410", hosted: true },
+      { from: "data", to: "deploy", path: "M500 270 V410", hosted: true },
+      { from: "services", to: "deploy", path: "M790 270 V410", hosted: true },
+      { from: "deploy", to: "deploy", path: "M150 410 H850", hosted: true }
     ]
   },
   tall: {
@@ -529,23 +536,132 @@ const BLUEPRINT_LAYOUTS: Record<"wide" | "tall", BlueprintLayout> = {
         signal: [0.32, 0.54]
       },
       { from: "api", to: "data", path: "M200 270 V530", signal: [0.32, 0.52] },
-      { from: "data", to: "deploy", path: "M200 530 V650" },
-      { from: "deploy", to: "deploy", path: "M90 650 H310" }
+      { from: "data", to: "deploy", path: "M200 530 V650", hosted: true },
+      { from: "deploy", to: "deploy", path: "M90 650 H310", hosted: true }
     ]
   }
-};
+} satisfies Record<BlueprintShape, BlueprintLayout<AppNodeId>>;
+
+// The brief runs goal → structure → design → build, then out to SEO; the built
+// site and its SEO output are what Vercel hosts.
+const WEB_LAYOUT = {
+  wide: {
+    width: 920,
+    height: 500,
+    user: [70, 110],
+    nodes: {
+      goal: [260, 110],
+      structure: [500, 110],
+      design: [790, 110],
+      build: [790, 270],
+      seo: [500, 270],
+      launch: [500, 410]
+    },
+    edges: [
+      {
+        from: "user",
+        to: "goal",
+        path: "M70 110 H260",
+        signal: [0.02, 0.14]
+      },
+      {
+        from: "goal",
+        to: "structure",
+        path: "M260 110 H500",
+        signal: [0.14, 0.28]
+      },
+      {
+        from: "structure",
+        to: "design",
+        path: "M500 110 H790",
+        signal: [0.28, 0.44]
+      },
+      {
+        from: "design",
+        to: "build",
+        path: "M790 110 V270",
+        signal: [0.44, 0.56]
+      },
+      {
+        from: "build",
+        to: "seo",
+        path: "M790 270 H500",
+        signal: [0.56, 0.72]
+      },
+      { from: "seo", to: "launch", path: "M500 270 V410", hosted: true },
+      { from: "build", to: "launch", path: "M790 270 V410", hosted: true },
+      { from: "launch", to: "launch", path: "M150 410 H850", hosted: true }
+    ]
+  },
+  tall: {
+    width: 400,
+    height: 720,
+    user: [200, 40],
+    nodes: {
+      goal: [200, 140],
+      structure: [200, 235],
+      design: [200, 330],
+      build: [200, 425],
+      seo: [95, 545],
+      launch: [200, 660]
+    },
+    edges: [
+      {
+        from: "user",
+        to: "goal",
+        path: "M200 40 V140",
+        signal: [0.02, 0.14]
+      },
+      {
+        from: "goal",
+        to: "structure",
+        path: "M200 140 V235",
+        signal: [0.14, 0.28]
+      },
+      {
+        from: "structure",
+        to: "design",
+        path: "M200 235 V330",
+        signal: [0.28, 0.42]
+      },
+      {
+        from: "design",
+        to: "build",
+        path: "M200 330 V425",
+        signal: [0.42, 0.56]
+      },
+      {
+        from: "build",
+        to: "seo",
+        path: "M200 425 V485 H95 V545",
+        signal: [0.56, 0.72]
+      },
+      { from: "seo", to: "launch", path: "M95 545 V600 H200", hosted: true },
+      { from: "build", to: "launch", path: "M200 425 V660", hosted: true },
+      { from: "launch", to: "launch", path: "M90 660 H310", hosted: true }
+    ]
+  }
+} satisfies Record<BlueprintShape, BlueprintLayout<WebNodeId>>;
+
+const BLUEPRINT_LAYOUTS: Record<
+  BlueprintView,
+  Record<BlueprintShape, BlueprintLayout<string>>
+> = { app: APP_LAYOUT, web: WEB_LAYOUT };
+
+const BLUEPRINT_VIEWS = Object.keys(blueprints) as BlueprintView[];
 
 function BlueprintWires({
-  variant,
+  layout,
+  shape,
   active,
   motion
 }: {
-  variant: keyof typeof BLUEPRINT_LAYOUTS;
-  active: BlueprintNodeId;
+  layout: BlueprintLayout<string>;
+  shape: BlueprintShape;
+  active: string;
   motion: boolean;
 }) {
-  const layout = BLUEPRINT_LAYOUTS[variant];
-  const isLit = (edge: BlueprintLayout["edges"][number]) =>
+  const isLit = (edge: BlueprintLayout<string>["edges"][number]) =>
     edge.from === active || edge.to === active;
 
   // Lit wires draw last so a shared segment shows the accent.
@@ -555,7 +671,7 @@ function BlueprintWires({
 
   return (
     <svg
-      className={`blueprint-wires blueprint-wires--${variant}`}
+      className={`blueprint-wires blueprint-wires--${shape}`}
       viewBox={`0 0 ${layout.width} ${layout.height}`}
       aria-hidden="true"
     >
@@ -564,10 +680,7 @@ function BlueprintWires({
           key={edge.path}
           d={edge.path}
           vectorEffect="non-scaling-stroke"
-          className={[
-            edge.to === "deploy" && "is-hosted",
-            isLit(edge) && "is-lit"
-          ]
+          className={[edge.hosted && "is-hosted", isLit(edge) && "is-lit"]
             .filter(Boolean)
             .join(" ")}
         />
@@ -601,15 +714,57 @@ function BlueprintWires({
   );
 }
 
+function BlueprintTag({ tag }: { tag: string }) {
+  return (
+    <li>
+      {Object.hasOwn(toolIcons, tag) ? (
+        <ToolGlyph tool={tag as Tool} className="blueprint-tool-icon" />
+      ) : (
+        <i className="blueprint-tag-dot" aria-hidden="true" />
+      )}
+      {tag}
+    </li>
+  );
+}
+
 function SystemBlueprint() {
-  const [active, setActive] = useState<BlueprintNodeId>("api");
+  const [view, setView] = useState<BlueprintView>("app");
+  // Each view remembers the part you left it on.
+  const [selected, setSelected] = useState<Record<BlueprintView, string>>({
+    app: blueprints.app.start,
+    web: blueprints.web.start
+  });
   const motion = useSyncExternalStore(
     subscribeReducedMotion,
     () => !window.matchMedia(REDUCED_MOTION).matches,
     () => false
   );
-  const { wide, tall } = BLUEPRINT_LAYOUTS;
-  const current = blueprint.find((node) => node.id === active)!;
+  const { nodes, title, flow, hosted } = blueprints[view];
+  const { wide, tall } = BLUEPRINT_LAYOUTS[view];
+  const active = selected[view];
+  const current = nodes.find((node) => node.id === active)!;
+
+  const select = (id: string) =>
+    setSelected((state) => ({ ...state, [view]: id }));
+
+  // Arrow keys move between tabs, as in any tab list.
+  const onTabKeyDown = (event: ReactKeyboardEvent<HTMLButtonElement>) => {
+    const last = BLUEPRINT_VIEWS.length - 1;
+    const index = BLUEPRINT_VIEWS.indexOf(view);
+    const moves: Record<string, number> = {
+      ArrowRight: Math.min(index + 1, last),
+      ArrowLeft: Math.max(index - 1, 0),
+      Home: 0,
+      End: last
+    };
+    const next = moves[event.key];
+
+    if (next === undefined) return;
+
+    event.preventDefault();
+    setView(BLUEPRINT_VIEWS[next]);
+    document.getElementById(`blueprint-tab-${BLUEPRINT_VIEWS[next]}`)?.focus();
+  };
 
   // One set of nodes serves both drawings; CSS picks the coordinates.
   const place = (wideAt: Point, tallAt: Point) =>
@@ -623,16 +778,48 @@ function SystemBlueprint() {
   return (
     <div className="blueprint">
       <div className="monitor-topbar">
-        <span>SYSTEM BLUEPRINT</span>
+        <span>{title}</span>
         <span>SELECT A PART</span>
       </div>
 
-      <div className="blueprint-body">
+      <div className="blueprint-tabs">
+        <div className="blueprint-tablist" role="tablist" aria-label="Blueprint">
+          {BLUEPRINT_VIEWS.map((id) => (
+            <button
+              key={id}
+              id={`blueprint-tab-${id}`}
+              type="button"
+              role="tab"
+              className="blueprint-tab"
+              aria-selected={id === view}
+              aria-controls="blueprint-view"
+              tabIndex={id === view ? 0 : -1}
+              onClick={() => setView(id)}
+              onKeyDown={onTabKeyDown}
+            >
+              <i aria-hidden="true" />
+              {blueprints[id].tab}
+            </button>
+          ))}
+        </div>
+
+        <span className="blueprint-note">{blueprints[view].note}</span>
+      </div>
+
+      <div
+        className="blueprint-body"
+        id="blueprint-view"
+        role="tabpanel"
+        aria-labelledby={`blueprint-tab-${view}`}
+      >
         <div className="blueprint-stage">
           <div
+            key={view}
             className="blueprint-map"
             role="group"
-            aria-label="Parts of a system"
+            aria-label={
+              view === "app" ? "Parts of a system" : "Parts of a website"
+            }
             style={
               {
                 "--wide-ratio": `${wide.width} / ${wide.height}`,
@@ -640,27 +827,37 @@ function SystemBlueprint() {
               } as CSSProperties
             }
           >
-            <BlueprintWires variant="wide" active={active} motion={motion} />
-            <BlueprintWires variant="tall" active={active} motion={motion} />
+            <BlueprintWires
+              layout={wide}
+              shape="wide"
+              active={active}
+              motion={motion}
+            />
+            <BlueprintWires
+              layout={tall}
+              shape="tall"
+              active={active}
+              motion={motion}
+            />
 
             <span
               className="blueprint-user"
               style={place(wide.user, tall.user)}
             >
-              <span>Request</span>
+              <span>{flow}</span>
             </span>
 
-            {blueprint.map((node) => (
+            {nodes.map((node) => (
               <button
                 key={node.id}
                 type="button"
                 className={`blueprint-node ${node.id === active ? "is-active" : ""}`}
                 style={place(wide.nodes[node.id], tall.nodes[node.id])}
                 aria-pressed={node.id === active}
-                onClick={() => setActive(node.id)}
-                onFocus={() => setActive(node.id)}
+                onClick={() => select(node.id)}
+                onFocus={() => select(node.id)}
                 onPointerEnter={(event) => {
-                  if (event.pointerType === "mouse") setActive(node.id);
+                  if (event.pointerType === "mouse") select(node.id);
                 }}
               >
                 <span>{node.number}</span>
@@ -671,30 +868,34 @@ function SystemBlueprint() {
         </div>
 
         <div className="blueprint-detail" aria-live="polite">
-          {/* Every panel stays mounted in one grid cell so the monitor keeps
-              the tallest panel's height instead of jumping between parts. */}
-          {blueprint.map((node) => (
-            <div
-              key={node.id}
-              className={`blueprint-panel ${node.id === active ? "is-active" : ""}`}
-              aria-hidden={node.id !== active}
-            >
-              <span className="eyebrow">
-                {node.number} / {node.name}
-              </span>
-              <strong>{node.title}</strong>
-              <p>{node.description}</p>
+          {/* Every panel of every view stays mounted in one grid cell so the
+              monitor keeps the tallest panel's height instead of jumping
+              between parts or tabs. */}
+          {BLUEPRINT_VIEWS.flatMap((id) =>
+            blueprints[id].nodes.map((node) => {
+              const shown = id === view && node.id === active;
 
-              <ul className="blueprint-tools">
-                {node.tools.map((tool) => (
-                  <li key={tool}>
-                    <ToolGlyph tool={tool} className="blueprint-tool-icon" />
-                    {tool}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+              return (
+                <div
+                  key={node.id}
+                  className={`blueprint-panel ${shown ? "is-active" : ""}`}
+                  aria-hidden={!shown}
+                >
+                  <span className="eyebrow">
+                    {node.number} / {node.name}
+                  </span>
+                  <strong>{node.title}</strong>
+                  <p>{node.description}</p>
+
+                  <ul className="blueprint-tools">
+                    {node.tags.map((tag) => (
+                      <BlueprintTag key={tag} tag={tag} />
+                    ))}
+                  </ul>
+                </div>
+              );
+            })
+          )}
         </div>
       </div>
 
@@ -702,16 +903,16 @@ function SystemBlueprint() {
         <div className="blueprint-legend" aria-hidden="true">
           <span>
             <i />
-            Request
+            {flow}
           </span>
           <span>
             <i className="is-hosted" />
-            Runs on
+            {hosted}
           </span>
         </div>
 
         <span>
-          {current.number} / {String(blueprint.length).padStart(2, "0")}
+          {current.number} / {String(nodes.length).padStart(2, "0")}
         </span>
       </div>
     </div>
