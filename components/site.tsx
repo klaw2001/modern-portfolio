@@ -202,6 +202,7 @@ function Nav() {
         <a href="#websites">Websites</a>
         <a href="#work">Work</a>
         <a href="#stack">Stack</a>
+        <Link href="/blog">Blog</Link>
         <a href="#contact">Contact</a>
       </nav>
 
@@ -1759,6 +1760,7 @@ export default function Site() {
           <span>HN / 2026</span>
           <span>BUILDING FULL STACK PRODUCTS END TO END</span>
           <span>MUMBAI, INDIA</span>
+          <Link href="/blog">READ THE BLOG →</Link>
         </footer>
       </main>
     </>
